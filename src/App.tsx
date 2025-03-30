@@ -14,10 +14,8 @@ import {
   Eye,
   Zap,
   Database,
-  Clock,
   AlertTriangle,
   Trash2,
-  ChevronDown,
   ArrowUpDown,
   Crosshair,
   MessageCircle,
@@ -27,7 +25,11 @@ import {
   Plus,
   Minus,
   Edit,
-  UserCheck
+  UserCheck,
+  ChevronRight,
+  ChevronLeft,
+  LogOut,
+  Lock
 } from 'lucide-react';
 
 type Player = {
@@ -237,175 +239,181 @@ const mockItems: Item[] = [
   }
 ];
 
-function Sidebar({ activePage, setActivePage }: { activePage: string; setActivePage: (page: string) => void }) {
-  const user = {
-    name: "AdminJohn",
-    group: "Super Admin",
-    icon: Shield,
+function Sidebar({ activePage, setActivePage, onToggle }: { activePage: string; setActivePage: (page: string) => void; onToggle: (collapsed: boolean) => void }) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const menuItems = [
+    { name: "Dashboard", icon: BarChart3, page: "dashboard" },
+    { name: "Players", icon: Users, page: "players" },
+    { name: "Vehicles", icon: Car, page: "vehicles" },
+    { name: "Items", icon: Package, page: "items" },
+    { name: "Bans", icon: Ban, page: "bans" },
+    { name: "Logs", icon: History, page: "logs" },
+    { name: "Roles", icon: UserCog, page: "roles" },
+    { name: "Server", icon: AlertCircle, page: "server" },
+    { name: "Warnings", icon: AlertTriangle, page: "warnings" },
+  ];
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+    onToggle(!isCollapsed);
   };
 
-  const [expandedSection, setExpandedSection] = useState<string | null>("general");
+  const handleLogout = () => {
+    const rippleContainer = document.createElement("div");
+    rippleContainer.className = "fixed inset-0 pointer-events-none overflow-hidden z-50";
+    document.body.appendChild(rippleContainer);
 
-  const toggleSection = (section: string) => {
-    setExpandedSection((prev) => (prev === section ? null : section));
+    const x = window.innerWidth / 2;
+    const y = window.innerHeight / 2;
+
+    const ripple = document.createElement("div");
+    ripple.className = "absolute rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 animate-ripple";
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    ripple.style.width = "40px";
+    ripple.style.height = "40px";
+    ripple.style.transform = "translate(-50%, -50%)";
+    rippleContainer.appendChild(ripple);
+
+    setTimeout(() => {
+      const overlay = document.createElement("div");
+      overlay.className = "fixed inset-0 bg-gradient-to-br from-blue-900 via-black to-indigo-900 flex flex-col items-center justify-center z-50 animate-fadeIn";
+
+      const logoutMessage = document.createElement("div");
+      logoutMessage.className = "text-center text-white text-6xl font-extrabold tracking-wide animate-fadeInSlow";
+      logoutMessage.textContent = "Goodbye, AdminUser.";
+      overlay.appendChild(logoutMessage);
+
+      document.body.appendChild(overlay);
+
+      setTimeout(() => {
+        logoutMessage.textContent = "Logging out...";
+        logoutMessage.className = "text-center text-white text-4xl font-bold animate-fadeIn";
+      }, 3000);
+
+      setTimeout(() => {
+        overlay.classList.replace("animate-fadeIn", "animate-fadeOut");
+        setTimeout(() => {
+          document.body.removeChild(rippleContainer);
+          document.body.removeChild(overlay);
+        }, 1000);
+
+        const logoutUI = document.createElement("div");
+        logoutUI.className = "fixed inset-0 bg-gradient-to-br from-blue-900 via-gray-900 to-black flex flex-col items-center justify-center text-white z-50";
+        logoutUI.innerHTML = `
+          <h1 class="text-5xl font-bold mb-4 animate-fadeIn">You have been logged out</h1>
+          <p class="text-lg mb-8 text-gray-300 animate-fadeInSlow">Thank you for using the Admin Hub. See you next time!</p>
+          <button class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg font-semibold transform hover:scale-105 animate-pulse">
+            Return to Login
+          </button>
+        `;
+        document.body.appendChild(logoutUI);
+
+        const button = logoutUI.querySelector("button");
+        button?.addEventListener("click", () => {
+          window.location.reload();
+        });
+      }, 5000);
+    }, 1000);
+
+    setTimeout(() => {
+      rippleContainer.remove();
+    }, 2000);
   };
 
   return (
-    <div className="w-64 bg-gray-900 h-screen fixed left-0 top-0 text-white p-4 flex flex-col justify-between">
-      <div>
-        <div className="flex items-center gap-2 mb-8">
-          <Shield className="w-8 h-8 text-blue-500 animate-pulse" />
-          <h1 className="text-xl font-bold">Admin Hub</h1>
+    <>
+      <div className="absolute top-4 right-4 bg-gray-900 p-4 rounded-lg shadow-lg flex items-center gap-4 z-50">
+        <div className="text-center">
+          <p className="text-sm font-medium text-gray-300 flex items-center">
+            Logged in as
+            <span
+              className="line"
+              style={{
+                border: "0.1vw solid #23a0ff",
+                background: "radial-gradient(122.22% 122.22% at 50% 50%, #2395ff 0%, rgba(255, 193, 35, 0) 100%)",
+                boxShadow: "0px 0px 2vw 0px #238dff",
+                width: "0.4vw",
+                height: "1vw",
+                marginLeft: "0.8vw",
+                marginRight: "0.8vw",
+              }}
+            ></span>
+            AdminUser
+          </p>
+          <p className="text-xs text-gray-400">
+            Role: <span className="text-blue-400">Super Admin</span>
+          </p>
+        </div>
+        <LogOut
+          onClick={handleLogout}
+          className="w-6 h-6 text-red-500 cursor-pointer hover:text-red-600 transition-transform transform hover:scale-105"
+        />
+      </div>
+      <div
+        className={`sidebar h-screen fixed left-2 top-2 text-white flex flex-col justify-between transition-all ${
+          isCollapsed ? "w-20" : "w-64"
+        }`}
+        style={{ zIndex: 10 }}
+      >
+        <div>
+          <div className={`flex items-center gap-2 p-4 ${isCollapsed ? "justify-center" : ""}`}>
+            <Shield className="w-9 h-9 text-blue-500 animate-pulse " />
+            {!isCollapsed && <h1 className="text-lg font-semibold">Admin Hub</h1>}
+          </div>
+
+          <nav className="mt-4 space-y-2">
+            {menuItems.map((item) => (
+              <button
+                key={item.page}
+                onClick={() => setActivePage(item.page)}
+                className={`flex items-center gap-2 w-full p-2 rounded-md transition-all ${
+                  activePage === item.page
+                    ? "bg-blue-600 text-white"
+                    : "hover:bg-gray-700 bg-transparent text-gray-300"
+                } ${isCollapsed ? "justify-center" : ""}`}
+              >
+                <item.icon className="w-5 h-5" />
+                {!isCollapsed && (
+                  <>
+                    <span
+                      className="line"
+                      style={{
+                        border: "0.1vw solid #23a0ff",
+                        background: "radial-gradient(122.22% 122.22% at 50% 50%, #2395ff 0%, rgba(255, 193, 35, 0) 100%)",
+                        boxShadow: "0px 0px 2vw 0px #238dff",
+                        width: "0.4vw",
+                        height: "1vw",
+                        marginLeft: "0.8vw",
+                        marginRight: "0.8vw",
+                      }}
+                    ></span>
+                    <span className="text-sm">{item.name}</span>
+                  </>
+                )}
+              </button>
+            ))}
+          </nav>
         </div>
 
-        <nav className="space-y-4">
-          <div>
-            <button
-              onClick={() => toggleSection("general")}
-              className="flex items-center justify-between w-full p-3 rounded bg-gray-800 hover:bg-gray-700"
-            >
-              <span className="font-medium">General</span>
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  expandedSection === "general" ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {expandedSection === "general" && (
-              <div className="mt-2 space-y-2 pl-4">
-                <button
-                  onClick={() => setActivePage("dashboard")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "dashboard" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <BarChart3 className="w-5 h-5" />
-                  <span>Dashboard</span>
-                </button>
-                <button
-                  onClick={() => setActivePage("players")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "players" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <Users className="w-5 h-5" />
-                  <span>Players</span>
-                </button>
-              </div>
+        <div className="p-4 border-t border-gray-700 flex justify-start w-full"></div>
+        <div className="p-4 flex justify-start">
+          <button
+            onClick={toggleSidebar}
+            className="p-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-all duration-300 ease-in-out transform shadow-md"
+            style={{ position: "fixed", left: "30px", bottom: "10px" }}
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-6 h-6" />
+            ) : (
+              <ChevronLeft className="w-6 h-6" />
             )}
-          </div>
-
-          <div>
-            <button
-              onClick={() => toggleSection("management")}
-              className="flex items-center justify-between w-full p-3 rounded bg-gray-800 hover:bg-gray-700"
-            >
-              <span className="font-medium">Management</span>
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  expandedSection === "management" ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {expandedSection === "management" && (
-              <div className="mt-2 space-y-2 pl-4">
-                <button
-                  onClick={() => setActivePage("vehicles")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "vehicles" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <Car className="w-5 h-5" />
-                  <span>Vehicles</span>
-                </button>
-                <button
-                  onClick={() => setActivePage("items")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "items" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <Package className="w-5 h-5" />
-                  <span>Items</span>
-                </button>
-                <button
-                  onClick={() => setActivePage("bans")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "bans" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <Ban className="w-5 h-5" />
-                  <span>Bans</span>
-                </button>
-                <button
-                  onClick={() => setActivePage("logs")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "logs" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <History className="w-5 h-5" />
-                  <span>Logs</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <button
-              onClick={() => toggleSection("advanced")}
-              className="flex items-center justify-between w-full p-3 rounded bg-gray-800 hover:bg-gray-700"
-            >
-              <span className="font-medium">Advanced</span>
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  expandedSection === "advanced" ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {expandedSection === "advanced" && (
-              <div className="mt-2 space-y-2 pl-4">
-                <button
-                  onClick={() => setActivePage("roles")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "roles" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <UserCog className="w-5 h-5" />
-                  <span>Roles</span>
-                </button>
-                <button
-                  onClick={() => setActivePage("server")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "server" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <AlertCircle className="w-5 h-5" />
-                  <span>Server Management</span>
-                </button>
-                <button
-                  onClick={() => setActivePage("warnings")}
-                  className={`flex items-center gap-3 w-full p-2 rounded ${
-                    activePage === "warnings" ? "bg-blue-600" : "hover:bg-gray-800"
-                  }`}
-                >
-                  <AlertTriangle className="w-5 h-5" />
-                  <span>Player Warnings</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </nav>
-      </div>
-
-      <div className="mt-8 border-t border-gray-700 pt-4">
-        <div className="flex items-center gap-3">
-          <user.icon className="w-8 h-8 text-blue-500" />
-          <div>
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-gray-400">{user.group}</p>
-          </div>
+          </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -413,10 +421,10 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative z-10 animate-fade-in">
+      <div className="modal rounded-lg shadow-lg p-6 w-full max-w-md relative z-10">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-transform transform hover:scale-110"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-200 transition-transform transform hover:scale-110"
         >
           ✕
         </button>
@@ -477,7 +485,8 @@ function PlayerActionsModal({ player, action, onClose }: { player: Player; actio
       )}
 
       <div className="flex justify-end gap-4 mt-4">
-        <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        <button onClick={onClose}               className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-850"
+        >Cancel</button>
       </div>
     </Modal>
   );
@@ -508,29 +517,29 @@ function CensoredInfo({ label, value }: { label: string; value: string }) {
 
 function PlayerDetails({ player }: { player: Player }) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-bold mb-4">Player Details</h2>
+    <div className="card rounded-lg shadow-lg p-6">
+      <h2 className="text-xl font-bold mb-4 text-gray-100">Player Details</h2>
       <div className="space-y-4">
         <div>
-          <h3 className="font-semibold">Basic Info</h3>
+          <h3 className="font-semibold text-gray-300">Basic Info</h3>
           <CensoredInfo label="Steam" value={player.steam} />
           <CensoredInfo label="Discord" value={player.discord} />
           <CensoredInfo label="IP" value={player.ip} />
         </div>
         <div>
-          <h3 className="font-semibold">Status</h3>
+          <h3 className="font-semibold text-gray-300">Status</h3>
           <p><strong>Ping:</strong> {player.ping}ms</p>
           <p><strong>Job:</strong> {player.job}</p>
           <p><strong>Rank:</strong> {player.rank}</p>
         </div>
         <div>
-          <h3 className="font-semibold">Money</h3>
+          <h3 className="font-semibold text-gray-300">Money</h3>
           <p><strong>Cash:</strong> ${player.money.cash}</p>
           <p><strong>Bank:</strong> ${player.money.bank}</p>
           <p><strong>Black:</strong> ${player.money.black}</p>
         </div>
         <div>
-          <h3 className="font-semibold">Position</h3>
+          <h3 className="font-semibold text-gray-300">Position</h3>
           <p><strong>Coordinates:</strong> {player.position.x}, {player.position.y}</p>
         </div>
       </div>
@@ -554,7 +563,7 @@ function PlayerList({
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-dark rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Live Players</h2>
         <div className="flex gap-4">
@@ -573,22 +582,22 @@ function PlayerList({
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50">
+            <thead className="bg-gray-900 border border-gray-700 rounded-t-lg">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Money</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Player</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Status</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Location</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Money</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
             </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+            </thead>
+          <tbody className="bg-dark divide-y divide-gray-200">
             {filteredPlayers.map((player) => (
               <tr key={player.id} className="hover:bg-gray-50 transition-all duration-200 ease-in-out">
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <div>
-                      <div className="font-medium text-gray-900">{player.name}</div>
+                      <div className="font-medium text-gray-50">{player.name}</div>
                       <CensoredInfo label="Steam" value={player.steam} />
                       <CensoredInfo label="Discord" value={player.discord} />
                     </div>
@@ -620,7 +629,7 @@ function PlayerList({
                         setSelectedPlayer(player);
                         setActivePage("PlayerDetails");
                       }}
-                      className="p-1 hover:bg-gray-100 rounded transition-transform transform hover:scale-110" title="View"
+                      className="p-1 hover:bg-gray-800 rounded transition-transform transform hover:scale-110" title="View"
                     >
                       <Eye className="w-5 h-5 text-blue-500" />
                     </button>
@@ -629,7 +638,7 @@ function PlayerList({
                         setLocalSelectedPlayer(player);
                         setAction("Ban");
                       }}
-                      className="p-1 hover:bg-gray-100 rounded transition-transform transform hover:scale-110" title="Ban"
+                      className="p-1 hover:bg-gray-800 rounded transition-transform transform hover:scale-110" title="Ban"
                     >
                       <Ban className="w-5 h-5 text-red-500" />
                     </button>
@@ -638,7 +647,7 @@ function PlayerList({
                         setLocalSelectedPlayer(player);
                         setAction("Message");
                       }}
-                      className="p-1 hover:bg-gray-100 rounded transition-transform transform hover:scale-110" title="Message"
+                      className="p-1 hover:bg-gray-800 rounded transition-transform transform hover:scale-110" title="Message"
                     >
                       <MessageSquare className="w-5 h-5 text-green-500" />
                     </button>
@@ -647,7 +656,7 @@ function PlayerList({
                         setLocalSelectedPlayer(player);
                         setAction("Teleport");
                       }}
-                      className="p-1 hover:bg-gray-100 rounded transition-transform transform hover:scale-110" title="Teleport"
+                      className="p-1 hover:bg-gray-800 rounded transition-transform transform hover:scale-110" title="Teleport"
                     >
                       <Crosshair className="w-5 h-5 text-purple-500" />
                     </button>
@@ -683,7 +692,7 @@ function BanList() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-dark rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Ban Management</h2>
           <div className="flex gap-4">
@@ -708,7 +717,7 @@ function BanList() {
         </div>
 
         {showBanForm && (
-          <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+          <div className="mb-6 p-4 border rounded-lg bg-gray-800">
             <h3 className="font-semibold mb-4">Issue New Ban</h3>
             <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <input
@@ -736,17 +745,18 @@ function BanList() {
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+                        <thead className="bg-gray-900 border border-gray-700 rounded-t-lg">
+
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Steam</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Player</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Steam</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Reason</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Admin</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Duration</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-dark divide-y divide-gray-200">
               {filteredBans.map((ban) => (
                 <tr key={ban.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
@@ -782,7 +792,7 @@ function BanList() {
           <div className="flex justify-end gap-4">
             <button
               onClick={() => setSelectedBan(null)}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-850"
             >
               Cancel
             </button>
@@ -802,79 +812,56 @@ function LogsList() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold">Server Logs</h2>
-          <div className="flex gap-4">
-            <select
-              value={logType}
-              onChange={(e) => setLogType(e.target.value)}
-              className="p-2 border rounded"
-            >
-              <option value="all">All Logs</option>
-              <option value="money">Money Transfers</option>
-              <option value="combat">Combat</option>
-              <option value="vehicle">Vehicle</option>
-              <option value="item">Items</option>
-            </select>
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="p-2 border rounded"
-            >
-              <option value="1h">Last Hour</option>
-              <option value="24h">Last 24 Hours</option>
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-            </select>
-          </div>
+      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-100">Server Logs</h2>
+        <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
+          <select
+            value={logType}
+            onChange={(e) => setLogType(e.target.value)}
+            className="p-2 border rounded bg-gray-700 text-gray-200 border-gray-600"
+          >
+            <option value="all">All Logs</option>
+            <option value="money">Money Transfers</option>
+            <option value="combat">Combat</option>
+            <option value="vehicle">Vehicle</option>
+            <option value="item">Items</option>
+          </select>
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="p-2 border rounded bg-gray-700 text-gray-200 border-gray-600"
+          >
+            <option value="1h">Last Hour</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {mockLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                      {log.timestamp}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-sm ${
-                      log.type === 'money' ? 'bg-green-100 text-green-800' :
-                      log.type === 'combat' ? 'bg-red-100 text-red-800' :
-                      log.type === 'vehicle' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {log.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{log.player}</td>
-                  <td className="px-6 py-4">{log.action}</td>
-                  <td className="px-6 py-4">{log.details}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-bold mb-4">Activity Graph</h2>
-        <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
-          <Activity className="w-8 h-8 text-gray-400" />
-          <span className="ml-2 text-gray-500">Activity visualization would go here</span>
+        <div className="space-y-4">
+          {mockLogs.map((log) => (
+            <div
+              key={log.id}
+              className="flex items-center gap-4 p-4 bg-gray-700 rounded-lg shadow hover:shadow-md transition-shadow"
+            >
+              <div
+                className={`p-3 rounded-full ${
+                  log.type === "money"
+                    ? "bg-green-600 text-green-100"
+                    : log.type === "combat"
+                    ? "bg-red-600 text-red-100"
+                    : "bg-blue-600 text-blue-100"
+                }`}
+              >
+                <Activity className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-200">{log.action}</p>
+                <p className="text-sm text-gray-400">{log.details}</p>
+              </div>
+              <span className="ml-auto text-sm text-gray-400">{log.timestamp}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -887,7 +874,7 @@ function RolesList() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-dark rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Role Management</h2>
           <button
@@ -900,7 +887,7 @@ function RolesList() {
         </div>
 
         {showRoleForm && (
-          <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+          <div className="mb-6 p-4 border rounded-lg bg-gray-800">
             <h3 className="font-semibold mb-4">Create New Role</h3>
             <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
@@ -917,7 +904,7 @@ function RolesList() {
 
         <div className="space-y-4">
           {mockRoles.map((role) => (
-            <div key={role.id} className="border rounded-lg p-4">
+            <div key={role.id} className="border rounded-lg p-4 bg-dark">
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h3 className="text-lg font-semibold">{role.name}</h3>
@@ -939,7 +926,7 @@ function RolesList() {
                   {role.permissions.map((permission, index) => (
                     <span
                       key={index}
-                      className="px-2 py-1 bg-gray-100 rounded text-sm"
+                      className="px-2 py-1 bg-gray-750 rounded text-sm"
                     >
                       {permission}
                     </span>
@@ -960,7 +947,7 @@ function RolesList() {
           <div className="flex justify-end gap-4">
             <button
               onClick={() => setSelectedRole(null)}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-850"
             >
               Cancel
             </button>
@@ -974,113 +961,99 @@ function RolesList() {
   );
 }
 
-function ServerStats() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      {[
-        { icon: Users, label: "Online Players", value: "24/32" },
-        { icon: Zap, label: "Server Performance", value: "98%" },
-        { icon: Database, label: "Database Status", value: "Healthy" },
-      ].map((stat, index) => (
-        <div key={index} className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{stat.label}</p>
-              <p className="text-2xl font-bold">{stat.value}</p>
-            </div>
-            <stat.icon className="w-8 h-8 text-blue-500" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function Dashboard() {
   const cpuUsage = 65;
   const ramUsage = 78;
 
   return (
-    <div className="space-y-6">
-      <ServerStats />
+    <><div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {[
+        { icon: Users, label: "Online Players", value: "24/32" },
+        { icon: Zap, label: "Server Performance", value: "98%" },
+        { icon: Database, label: "Database Status", value: "Healthy" },
+      ].map((stat, index) => (
+        <div key={index} className="bg-gray-900 rounded-lg shadow-lg p-6">
+        <div className="flex items-center justify-between">
+          <div>
+          <p className="text-sm text-gray-400">{stat.label}</p>
+          <p className="text-2xl font-bold text-gray-200">{stat.value}</p>
+          </div>
+          <stat.icon className="w-8 h-8 text-blue-500" />
+        </div>
+        </div>
+      ))}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Server Economy</h2>
-          <div className="h-64 bg-gray-100 rounded flex flex-col items-center justify-center">
-            <BarChart3 className="w-12 h-12 text-gray-400 mb-2" />
-            <span className="text-gray-500">Economy chart would go here</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Player Heatmap</h2>
-          <div className="h-64 bg-gray-100 rounded flex flex-col items-center justify-center">
-            <MapPin className="w-12 h-12 text-gray-400 mb-2" />
-            <span className="text-gray-500">Heatmap would go here</span>
-          </div>
+      <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-200">Server Economy</h2>
+        <div className="h-64 bg-gray-800 rounded flex flex-col items-center justify-center">
+        <BarChart3 className="w-12 h-12 text-gray-400 mb-2" />
+        <span className="text-gray-500">Economy chart would go here</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">CPU Usage</h2>
-          <div className="relative h-32 flex items-center justify-center">
-            <div className="text-center">
-              <span className="text-3xl font-bold text-blue-500">{cpuUsage}%</span>
-              <p className="text-sm text-gray-500">Current CPU load</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">RAM Usage</h2>
-          <div className="relative h-32 flex items-center justify-center">
-            <div className="text-center">
-              <span className="text-3xl font-bold text-green-500">{ramUsage}%</span>
-              <p className="text-sm text-gray-500">Current RAM usage</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Server Uptime</h2>
-          <div className="h-32 flex flex-col items-center justify-center">
-            <Activity className="w-12 h-12 text-gray-400" />
-            <span className="text-gray-500">99.99% uptime</span>
-          </div>
+      <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-200">Player Heatmap</h2>
+        <div className="h-64 bg-gray-800 rounded flex flex-col items-center justify-center">
+        <MapPin className="w-12 h-12 text-gray-400 mb-2" />
+        <span className="text-gray-500">Heatmap would go here</span>
         </div>
       </div>
+      </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
-        <div className="space-y-4">
-          {mockLogs.slice(0, 5).map((log) => (
-            <div
-              key={log.id}
-              className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div
-                className={`p-3 rounded-full ${
-                  log.type === "money"
-                    ? "bg-green-100 text-green-600"
-                    : log.type === "combat"
-                    ? "bg-red-100 text-red-600"
-                    : "bg-blue-100 text-blue-600"
-                }`}
-              >
-                <Activity className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-800">{log.action}</p>
-                <p className="text-sm text-gray-500">{log.details}</p>
-              </div>
-              <span className="ml-auto text-sm text-gray-400">{log.timestamp}</span>
-            </div>
-          ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-200">CPU Usage</h2>
+        <div className="relative h-32 flex flex-col items-center justify-center">
+        <span className="text-3xl font-bold text-blue-500">{cpuUsage}%</span>
+        <p className="text-sm text-gray-400">Current CPU load</p>
         </div>
+      </div>
+      <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-200">RAM Usage</h2>
+        <div className="relative h-32 flex flex-col items-center justify-center">
+        <span className="text-3xl font-bold text-green-500">{ramUsage}%</span>
+        <p className="text-sm text-gray-400">Current RAM load</p>
+        </div>
+      </div>
+      <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-200">Server Uptime</h2>
+        <div className="h-32 flex flex-col items-center justify-center">
+        <Activity className="w-12 h-12 text-gray-400" />
+        <span className="text-gray-500">99.99% uptime</span>
+        </div>
+      </div>
       </div>
     </div>
+
+    <div className="mt-12 bg-gray-900 rounded-lg shadow-lg p-6">
+      <h2 className="text-xl font-bold mb-4 text-gray-200">Recent Activity</h2>
+      <div className="space-y-4">
+      {mockLogs.slice(0, 5).map((log) => (
+        <div
+        key={log.id}
+        className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+        >
+        <div
+          className={`p-3 rounded-full ${log.type === "money"
+            ? "bg-green-600 text-green-100"
+            : log.type === "combat"
+            ? "bg-red-600 text-red-100"
+            : "bg-blue-600 text-blue-100"}`}
+        >
+          <Activity className="w-6 h-6" />
+        </div>
+        <div>
+          <p className="font-medium text-gray-300">{log.action}</p>
+          <p className="text-sm text-gray-500">{log.details}</p>
+        </div>
+        <span className="ml-auto text-sm text-gray-500">{log.timestamp}</span>
+        </div>
+      ))}
+      </div>
+    </div></>
   );
 }
 
@@ -1096,7 +1069,7 @@ function VehicleList() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-dark rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Manage Vehicles</h2>
           <div className="flex gap-4">
@@ -1121,7 +1094,7 @@ function VehicleList() {
         </div>
 
         {showGiveForm && (
-          <div className="mb-6 p-4 border rounded-lg relative bg-gray-50">
+          <div className="mb-6 p-4 border rounded-lg relative bg-gray-800">
             <h3 className="font-semibold mb-4">Give New Vehicle</h3>
             <form className="grid grid-cols-1 md:grid-cols-1 gap-4">
               <div className="flex items-center gap-4">
@@ -1150,16 +1123,16 @@ function VehicleList() {
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          <thead className="bg-gray-900 border border-gray-700 rounded-t-lg">
+          <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Vehicle</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Owner</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-dark divide-y divide-gray-200">
               {filteredVehicles.map((vehicle) => (
                 <tr key={vehicle.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
@@ -1212,7 +1185,7 @@ function VehicleList() {
                           setSelectedVehicle(vehicle);
                           setAction("Teleport");
                         }}
-                        className="p-1 hover:bg-gray-100 rounded" title="Teleport to Vehicle"
+                        className="p-1 hover:bg-gray-800 rounded" title="Teleport to Vehicle"
                       >
                         <Crosshair className="w-5 h-5 text-blue-500" />
                       </button>
@@ -1221,7 +1194,7 @@ function VehicleList() {
                           setSelectedVehicle(vehicle);
                           setAction("Delete");
                         }}
-                        className="p-1 hover:bg-gray-100 rounded" title="Delete Vehicle"
+                        className="p-1 hover:bg-gray-800 rounded" title="Delete Vehicle"
                       >
                         <Trash2 className="w-5 h-5 text-red-500" />
                       </button>
@@ -1230,7 +1203,7 @@ function VehicleList() {
                           setSelectedVehicle(vehicle);
                           setAction("Repair");
                         }}
-                        className="p-1 hover:bg-gray-100 rounded" title="Repair Vehicle"
+                        className="p-1 hover:bg-gray-800 rounded" title="Repair Vehicle"
                       >
                         <Zap className="w-5 h-5 text-green-500" />
                       </button>
@@ -1284,7 +1257,7 @@ function VehicleList() {
                 setSelectedVehicle(null);
                 setAction(null);
               }}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-850"
             >
               Cancel
             </button>
@@ -1307,7 +1280,7 @@ function ItemList() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-dark rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Manage Items</h2>
           <div className="flex gap-4">
@@ -1332,7 +1305,7 @@ function ItemList() {
         </div>
 
         {showGiveForm && (
-  <div className="mb-6 p-4 border rounded-lg relative bg-gray-50">
+  <div className="mb-6 p-4 border rounded-lg relative bg-gray-800">
     <div className="flex justify-between items-center mb-4">
       <h3 className="font-semibold">Give Items to Player</h3>
     </div>
@@ -1367,17 +1340,18 @@ function ItemList() {
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+                        <thead className="bg-gray-900 border border-gray-700 rounded-t-lg">
+
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Item</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Owner</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Quantity</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Quality</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-dark divide-y divide-gray-200">
               {filteredItems.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
@@ -1419,7 +1393,7 @@ function ItemList() {
                           setSelectedItem(item);
                           setAction("Edit");
                         }}
-                        className="p-1 hover:bg-gray-100 rounded" title="Edit Item"
+                        className="p-1 hover:bg-gray-800 rounded" title="Edit Item"
                       >
                         <Edit className="w-5 h-5 text-blue-500" />
                       </button>
@@ -1428,7 +1402,7 @@ function ItemList() {
                           setSelectedItem(item);
                           setAction("Delete");
                         }}
-                        className="p-1 hover:bg-gray-100 rounded" title="Remove Item"
+                        className="p-1 hover:bg-gray-800 rounded" title="Remove Item"
                       >
                         <Minus className="w-5 h-5 text-red-500" />
                       </button>
@@ -1480,7 +1454,7 @@ function ItemList() {
                 setSelectedItem(null);
                 setAction(null);
               }}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-850"
             >
               Cancel
             </button>
@@ -1510,9 +1484,9 @@ function ServerManagement({ setActivePage }: { setActivePage: (page: string) => 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Server Management</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="bg-dark rounded-lg shadow-lg p-8">
+      <h2 className="text-3xl font-bold mb-6 text-gray-50">Server Management</h2>
+      <p className="text-gray-400 mb-8">
         Manage critical server functions such as restarts, announcements, and updates. Use the buttons below to perform actions.
       </p>
 
@@ -1590,7 +1564,7 @@ function ServerManagement({ setActivePage }: { setActivePage: (page: string) => 
           {modalAction === "View Server Logs" && (
             <>
               <p className="mb-4">Last 10 Log Entries:</p>
-              <div className="bg-gray-100 p-4 rounded-lg space-y-2">
+              <div className="bg-dark-700 p-4 rounded-lg space-y-2">
                 <p>Server started</p>
                 <p>Player JohnDoe joined</p>
                 <p>Player JohnDoe left</p>
@@ -1616,7 +1590,7 @@ function ServerManagement({ setActivePage }: { setActivePage: (page: string) => 
           <div className="flex justify-end gap-4 mt-6">
             <button
               onClick={closeModal}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-850"
             >
               Cancel
             </button>
@@ -1627,7 +1601,7 @@ function ServerManagement({ setActivePage }: { setActivePage: (page: string) => 
               >
                 Confirm
               </button>
-            )}
+          )}
           </div>
         </Modal>
       )}
@@ -1650,24 +1624,25 @@ function IPHWIDTrackerPage({ setActivePage, setSelectedPlayer }: { setActivePage
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-dark rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-bold mb-4">IP & HWID Tracker</h2>
       <p className="text-gray-600 mb-6">
         Monitor player IP addresses and HWIDs to identify duplicate accounts and suspicious activity.
       </p>
 
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-200">
-          <thead className="bg-gray-50">
+      <table className="w-full border-collapse border-gray-900 border-gray-900">
+      <thead className="bg-gray-900 border border-gray-700 rounded-t-lg">
+
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HWID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Suspicious</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Player</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">IP Address</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">HWID</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Suspicious</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-dark divide-y divide-gray-200">
             {exampleData.map((entry) => (
               <tr key={entry.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">{entry.player}</td>
@@ -1704,7 +1679,7 @@ function IPHWIDTrackerPage({ setActivePage, setSelectedPlayer }: { setActivePage
       </div>
 
       <div className="mt-6 flex justify-end space-x-4">
-        <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+        <button className="px-4 py-2 bg-gray-500 text-gray-50 rounded hover:bg-gray-400">
           Back
         </button>
       </div>
@@ -1737,21 +1712,21 @@ function PlayerWarnings({ setActivePage, setSelectedPlayer }: { setActivePage: (
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-dark rounded-lg shadow-lg p-6">
       <h2 className="text-xl font-bold mb-4">Player Warnings</h2>
       <p>View and manage warnings issued to players.</p>
 
       <div className="mt-4">
-        <table className="w-full border-collapse border border-gray-200">
-          <thead className="bg-gray-50">
+        <table className="w-full border-collapse border-gray-900 border-gray-900">
+                      <thead className="bg-gray-900 border border-gray-700 rounded-t-lg">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warning</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Player</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Warning</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-dark divide-y divide-gray-200">
             {mockWarnings.map((warning) => (
               <tr key={warning.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">{warning.player}</td>
@@ -1779,63 +1754,231 @@ function PlayerWarnings({ setActivePage, setSelectedPlayer }: { setActivePage: (
   );
 }
 
-function App() {
-  const [activePage, setActivePage] = useState("dashboard");
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+function Login({ onLogin }: { onLogin: () => void }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (username === 'AdminUser' && password === 'AdminPass') {
+      setIsLoggingIn(true);
+      setTimeout(() => {
+        setIsTransitioning(true);
+        setTimeout(() => {
+          onLogin();
+        }, 1000); // Delay for the fade-out transition
+        
+      }, 3000); // Simulate a delay for the animation
+    } else {
+      setError('Invalid username or password');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <Sidebar activePage={activePage} setActivePage={setActivePage} />
-      <div className="ml-64 p-8 flex-1">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">
-            {activePage === "PlayerDetails" && selectedPlayer
-              ? `Player Details: ${selectedPlayer.name}`
-              : activePage.charAt(0).toUpperCase() + activePage.slice(1)}
-          </h1>
-          <p className="text-gray-600">Monitor and manage your FiveM server</p>
+    <div
+      className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-gray-900 to-black text-gray-200 overflow-hidden relative transition-opacity duration-1000 ${
+        isTransitioning ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
+      {isLoggingIn && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-90 transition-opacity duration-500">
+          <div className="relative">
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 blur-2xl rounded-full"></div>
+            <Shield className="w-32 h-32 text-blue-500 animate-spin-slow relative z-10" />
+          </div>
+          <h2 className="text-4xl font-extrabold mt-8 text-white animate-fadeIn">
+            Logging in...
+          </h2>
         </div>
-        
-        {activePage === "dashboard" && <Dashboard />}
-        {activePage === "players" && (
-          <PlayerList
-            setActivePage={setActivePage}
-            setSelectedPlayer={setSelectedPlayer}
-          />
+      )}
+      <div
+        className={`bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md transition-transform duration-700 ease-in-out ${
+          isLoggingIn ? 'scale-110 opacity-0' : 'scale-100 opacity-100'
+        }`}
+      >
+        <div className="text-center mb-4">
+          <Shield className="w-16 h-16 text-blue-500 mx-auto animate-pulse" />
+          <h2 className="text-4xl font-extrabold mt-4 text-white">Admin Hub</h2>
+          <p className="text-gray-400 text-sm">Sign in to manage your server</p>
+        </div>
+        {error && (
+          <div className="bg-red-600 text-white text-sm p-3 rounded mb-4 shadow-md">
+            {error}
+          </div>
         )}
-        {activePage === "vehicles" && <VehicleList />}
-        {activePage === "items" && <ItemList />}
-        {activePage === "bans" && <BanList />}
-        {activePage === "logs" && <LogsList />}
-        {activePage === "roles" && <RolesList />}
-        {activePage === "server" && <ServerManagement setActivePage={setActivePage} />}
-        {activePage === "warnings" && (
-          <PlayerWarnings
-            setActivePage={setActivePage}
-            setSelectedPlayer={setSelectedPlayer}
-          />
-        )}
-        {activePage === "ipHwidTracker" && (
-          <IPHWIDTrackerPage
-            setActivePage={setActivePage}
-            setSelectedPlayer={setSelectedPlayer}
-          />
-        )}
-        {activePage === "PlayerDetails" && selectedPlayer && (
-          <PlayerDetails player={selectedPlayer} />
-        )}
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Username</label>
+            <div className="relative">
+              <UserCog className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Enter your username"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg font-semibold transform hover:scale-105 animate-pulse hover:animate-none flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-5 h-5" />
+            Login
+          </button>
+        </form>
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => alert("Password recovery is not implemented yet.")}
+            className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            <AlertCircle className="w-4 h-4" />
+            Forgot your password?
+          </button>
+        </div>
       </div>
-      <footer className="bg-gray-900 text-white text-center py-4">
-        <p className="text-xs">
-          This project is not affiliated with FiveM or Cfx.re.
-        </p>
-        <p className="text-xs">
-          This project is licensed under the MIT License.
-        </p>
-        <p className="text-xs">
-          Made with ❤️ by Lucentix.
-        </p>
-      </footer>
+      <p className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-gray-400 text-xs text-center">
+        This project is not affiliated with{' '}
+        <a href="https://fivem.net/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+          FiveM
+        </a>{' '}
+        or{' '}
+        <a href="https://cfx.re/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+          Cfx.re
+        </a>. <br />
+        Made with <span className="text-red-500 animate-pulse">❤️</span> by{' '}
+        <a href="https://github.com/Lucentix" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+          Lucentix
+        </a>. <br />
+        Licensed under the{' '}
+        <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+          MIT License
+        </a>.
+      </p>
+    </div>
+  );
+}
+
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activePage, setActivePage] = useState("dashboard");
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const handleSidebarToggle = (collapsed: boolean) => {
+    setIsSidebarCollapsed(collapsed);
+  };
+
+  const handlePageChange = (page: string) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setActivePage(page);
+      setIsTransitioning(false);
+    }, 500); // Duration matches the fade-out animation
+  };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-gray-200 flex flex-col">
+      <Sidebar
+        activePage={activePage}
+        setActivePage={handlePageChange}
+        onToggle={handleSidebarToggle}
+      />
+      <div
+        className={`transition-all ${
+          isSidebarCollapsed ? "ml-20" : "ml-64"
+        } p-8 flex-1`}
+      >
+        <div
+          className={`transition-opacity duration-500 ${
+            isTransitioning ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-100">
+              {activePage === "PlayerDetails" && selectedPlayer
+                ? `Player Details: ${selectedPlayer.name}`
+                : activePage.charAt(0).toUpperCase() + activePage.slice(1)}
+            </h1>
+            <p className="text-gray-400">Monitor and manage your FiveM server</p>
+          </div>
+          <div className="container bg-gray-800 p-6 rounded-lg shadow-lg">
+            {/* Render active page */}
+            {activePage === "dashboard" && <Dashboard />}
+            {activePage === "players" && (
+              <PlayerList
+                setActivePage={handlePageChange}
+                setSelectedPlayer={setSelectedPlayer}
+              />
+            )}
+            {activePage === "vehicles" && <VehicleList />}
+            {activePage === "items" && <ItemList />}
+            {activePage === "bans" && <BanList />}
+            {activePage === "logs" && <LogsList />}
+            {activePage === "roles" && <RolesList />}
+            {activePage === "server" && <ServerManagement setActivePage={handlePageChange} />}
+            {activePage === "warnings" && (
+              <PlayerWarnings
+                setActivePage={handlePageChange}
+                setSelectedPlayer={setSelectedPlayer}
+              />
+            )}
+            {activePage === "ipHwidTracker" && (
+              <IPHWIDTrackerPage
+                setActivePage={handlePageChange}
+                setSelectedPlayer={setSelectedPlayer}
+              />
+            )}
+            {activePage === "PlayerDetails" && selectedPlayer && (
+              <PlayerDetails player={selectedPlayer} />
+            )}
+          </div>
+        </div>
+      </div>
+    <footer className="mt-auto mb-4">
+      <p className="text-gray-400 text-xs text-center">
+      This project is not affiliated with{' '}
+      <a href="https://fivem.net/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+      FiveM
+      </a>{' '}
+      or{' '}
+      <a href="https://cfx.re/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+      Cfx.re
+      </a>. <br />
+      Made with <span className="text-red-500 animate-pulse">❤️</span> by{' '}
+      <a href="https://github.com/Lucentix" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+      Lucentix
+      </a>. <br />
+      Licensed under the{' '}
+      <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+      MIT License
+      </a>.
+      </p>
+    </footer>
     </div>
   );
 }
