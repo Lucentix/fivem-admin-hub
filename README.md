@@ -1,4 +1,5 @@
 # FiveM Admin Hub
+# If you don't know what you're doing now, don't do anything
 
 FiveM Admin Hub is a powerful management interface for FiveM servers. It provides an intuitive user interface to manage players, vehicles, items, bans, logs, and more.
 
