@@ -484,6 +484,32 @@ function PlayerActionsModal({ player, action, onClose }: { player: Player; actio
         </form>
       )}
 
+      {action === "Kick" && (
+        <form className="space-y-4">
+          <input
+            type="text"
+            placeholder="Reason"
+            className="w-full p-2 border rounded"
+          />
+          <button type="submit" className="w-full px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+            Kick Player
+          </button>
+        </form>
+      )}
+
+      {action === "Warn" && (
+        <form className="space-y-4">
+          <input
+            type="text"
+            placeholder="Reason"
+            className="w-full p-2 border rounded"
+          />
+          <button type="submit" className="w-full px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">
+            Warn Player
+          </button>
+        </form>
+      )}
+
       <div className="flex justify-end gap-4 mt-4">
         <button onClick={onClose}               className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-850"
         >Cancel</button>
@@ -641,6 +667,24 @@ function PlayerList({
                       className="p-1 hover:bg-gray-800 rounded transition-transform transform hover:scale-110" title="Ban"
                     >
                       <Ban className="w-5 h-5 text-red-500" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setLocalSelectedPlayer(player);
+                        setAction("Kick");
+                      }}
+                      className="p-1 hover:bg-gray-800 rounded transition-transform transform hover:scale-110" title="Kick"
+                    >
+                      <UserCheck className="w-5 h-5 text-yellow-500" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLocalSelectedPlayer(player);
+                        setAction("Warn");
+                      }}
+                      className="p-1 hover:bg-gray-800 rounded transition-transform transform hover:scale-110" title="Warn"
+                    >
+                      <AlertCircle className="w-5 h-5 text-orange-500" />
                     </button>
                     <button
                       onClick={() => {
@@ -1761,118 +1805,136 @@ function Login({ onLogin }: { onLogin: () => void }) {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'AdminUser' && password === 'AdminPass') {
-      setIsLoggingIn(true);
+    setError('');
+    setIsLoggingIn(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.message || 'Login failed');
+        setIsLoggingIn(false);
+        return;
+      }
+
+      const { token } = await response.json();
+      localStorage.setItem('authToken', token);
+
       setTimeout(() => {
         setIsTransitioning(true);
         setTimeout(() => {
           onLogin();
-        }, 1000); // Delay for the fade-out transition
-        
-      }, 3000); // Simulate a delay for the animation
-    } else {
-      setError('Invalid username or password');
+        }, 1000);
+      }, 3000);
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setIsLoggingIn(false);
     }
   };
 
   return (
     <div
       className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-gray-900 to-black text-gray-200 overflow-hidden relative transition-opacity duration-1000 ${
-        isTransitioning ? 'opacity-0' : 'opacity-100'
+      isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}
     >
       {isLoggingIn && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-90 transition-opacity duration-500">
-          <div className="relative">
-            <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 blur-2xl rounded-full"></div>
-            <Shield className="w-32 h-32 text-blue-500 animate-spin-slow relative z-10" />
-          </div>
-          <h2 className="text-4xl font-extrabold mt-8 text-white animate-fadeIn">
-            Logging in...
-          </h2>
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-90 transition-opacity duration-500">
+        <div className="relative">
+        <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 blur-2xl rounded-full"></div>
+        <Shield className="w-32 h-32 text-blue-500 animate-spin-slow relative z-10" />
         </div>
+        <h2 className="text-4xl font-extrabold mt-8 text-white animate-fadeIn">
+        Logging in...
+        </h2>
+      </div>
       )}
       <div
-        className={`bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md transition-transform duration-700 ease-in-out ${
-          isLoggingIn ? 'scale-110 opacity-0' : 'scale-100 opacity-100'
-        }`}
+      className={`bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md transition-transform duration-700 ease-in-out ${
+        isLoggingIn ? 'scale-110 opacity-0' : 'scale-100 opacity-100'
+      }`}
       >
-        <div className="text-center mb-4">
-          <Shield className="w-16 h-16 text-blue-500 mx-auto animate-pulse" />
-          <h2 className="text-4xl font-extrabold mt-4 text-white">Admin Hub</h2>
-          <p className="text-gray-400 text-sm">Sign in to manage your server</p>
+      <div className="text-center mb-4">
+        <Shield className="w-16 h-16 text-blue-500 mx-auto animate-pulse" />
+        <h2 className="text-4xl font-extrabold mt-4 text-white">Admin Hub</h2>
+        <p className="text-gray-400 text-sm">Sign in to manage your server</p>
+      </div>
+      {error && (
+        <div className="bg-red-600 text-white text-sm p-3 rounded mb-4 shadow-md">
+        {error}
         </div>
-        {error && (
-          <div className="bg-red-600 text-white text-sm p-3 rounded mb-4 shadow-md">
-            {error}
-          </div>
-        )}
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">Username</label>
-            <div className="relative">
-              <UserCog className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                placeholder="Enter your username"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg font-semibold transform hover:scale-105 animate-pulse hover:animate-none flex items-center justify-center gap-2"
-          >
-            <LogOut className="w-5 h-5" />
-            Login
-          </button>
-        </form>
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => alert("Password recovery is not implemented yet.")}
-            className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors duration-200 flex items-center justify-center gap-2"
-          >
-            <AlertCircle className="w-4 h-4" />
-            Forgot your password?
-          </button>
+      )}
+      <form
+        onSubmit={async (e) => {
+        e.preventDefault();
+        setError('');
+        setIsLoggingIn(true);
+        await new Promise((resolve) => setTimeout(resolve, 3000)); // Simulate 3 seconds delay
+        handleLogin(e);
+        }}
+        className="space-y-6"
+      >
+        <div>
+        <label className="block text-sm font-medium mb-2 text-gray-300">Username</label>
+        <div className="relative">
+          <UserCog className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          placeholder="Enter your username"
+          required
+          />
         </div>
+        </div>
+        <div>
+        <label className="block text-sm font-medium mb-2 text-gray-300">Password</label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          placeholder="Enter your password"
+          required
+          />
+        </div>
+        </div>
+        <button
+        type="submit"
+        className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg font-semibold transform hover:scale-105 animate-pulse hover:animate-none flex items-center justify-center gap-2"
+        >
+        <LogOut className="w-5 h-5" />
+        Login
+        </button>
+      </form>
       </div>
       <p className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-gray-400 text-xs text-center">
-        This project is not affiliated with{' '}
-        <a href="https://fivem.net/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-          FiveM
-        </a>{' '}
-        or{' '}
-        <a href="https://cfx.re/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-          Cfx.re
-        </a>. <br />
-        Made with <span className="text-red-500 animate-pulse">❤️</span> by{' '}
-        <a href="https://github.com/Lucentix" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-          Lucentix
-        </a>. <br />
-        Licensed under the{' '}
-        <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-          MIT License
-        </a>.
+      This project is not affiliated with{' '}
+      <a href="https://fivem.net/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+        FiveM
+      </a>{' '}
+      or{' '}
+      <a href="https://cfx.re/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+        Cfx.re
+      </a>. <br />
+      Made with <span className="text-red-500 animate-pulse">❤️</span> by{' '}
+      <a href="https://github.com/Lucentix" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+        Lucentix
+      </a>. <br />
+      Licensed under the{' '}
+      <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+        MIT License
+      </a>.
       </p>
     </div>
   );
