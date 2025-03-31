@@ -242,7 +242,7 @@ const mockItems: Item[] = [
   }
 ];
 
-function Sidebar({ activePage, setActivePage, onToggle }: { activePage: string; setActivePage: (page: string) => void; onToggle: (collapsed: boolean) => void }) {
+function Sidebar({ activePage, setActivePage, onToggle, loggedInUser, userRole }: { activePage: string; setActivePage: (page: string) => void; onToggle: (collapsed: boolean) => void, loggedInUser: string | null, userRole: string | null }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
@@ -343,10 +343,10 @@ function Sidebar({ activePage, setActivePage, onToggle }: { activePage: string; 
                 marginRight: "0.8vw",
               }}
             ></span>
-            AdminUser
+            {loggedInUser || "Unknown User"}
           </p>
           <p className="text-xs text-gray-400">
-            Role: <span className="text-blue-400">Super Admin</span>
+            Role: <span className="text-blue-400">{userRole || "Unknown Role"}</span>
           </p>
         </div>
         <LogOut
@@ -1811,7 +1811,7 @@ function PlayerWarnings({ setActivePage, setSelectedPlayer }: { setActivePage: (
   );
 }
 
-function Login({ onLogin }: { onLogin: () => void }) {
+function Login({ onLogin }: { onLogin: (token: string) => void }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -1843,7 +1843,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
       setTimeout(() => {
         setIsTransitioning(true);
         setTimeout(() => {
-          onLogin();
+          onLogin(token); // Token an die App weitergeben
         }, 1000);
       }, 3000);
     } catch (err) {
@@ -1959,6 +1959,8 @@ function App() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<string | null>(null); // Neuer State für den Benutzernamen
+  const [userRole, setUserRole] = useState<string | null>(null); // Neuer State für die Rolle
 
   const handleSidebarToggle = (collapsed: boolean) => {
     setIsSidebarCollapsed(collapsed);
@@ -1972,8 +1974,15 @@ function App() {
     }, 500); // Duration matches the fade-out animation
   };
 
+  const handleLogin = (token: string) => {
+    const decodedToken = JSON.parse(atob(token.split('.')[1])); // JWT-Dekodierung
+    setLoggedInUser(decodedToken.username); // Benutzername aus dem Token speichern
+    setUserRole(decodedToken.role); // Rolle aus dem Token speichern
+    setIsAuthenticated(true);
+  };
+
   if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+    return <Login onLogin={(token) => handleLogin(token)} />;
   }
 
   return (
@@ -1982,6 +1991,8 @@ function App() {
         activePage={activePage}
         setActivePage={handlePageChange}
         onToggle={handleSidebarToggle}
+        loggedInUser={loggedInUser}
+        userRole={userRole}
       />
       <div
         className={`transition-all ${
