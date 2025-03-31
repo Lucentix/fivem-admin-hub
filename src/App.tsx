@@ -29,7 +29,10 @@ import {
   ChevronRight,
   ChevronLeft,
   LogOut,
-  Lock
+  Lock,
+  Server,
+  FileText,
+  Clock
 } from 'lucide-react';
 
 type Player = {
@@ -1011,40 +1014,50 @@ function Dashboard() {
 
   return (
     <><div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
       {[
-        { icon: Users, label: "Online Players", value: "24/32" },
-        { icon: Zap, label: "Server Performance", value: "98%" },
-        { icon: Database, label: "Database Status", value: "Healthy" },
+      { icon: Users, label: "Online Players", value: "24/32" },
+      { icon: Zap, label: "Server Performance", value: "98%" },
+      { icon: Database, label: "Database Status", value: "Healthy" },
+      { icon: Server, label: "Server Response Time" , value: "41ms" },
+      { icon: Activity, label: "Server Load", value: "75%" },
+      { icon: Shield, label: "Security Status", value: "Secure" },
+      { icon: FileText, label: "Logs Size", value: "2.5GB" },
+      { icon: Clock, label: "Last Backup", value: "2 hours ago" },
       ].map((stat, index) => (
-        <div key={index} className="bg-gray-900 rounded-lg shadow-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-          <p className="text-sm text-gray-400">{stat.label}</p>
-          <p className="text-2xl font-bold text-gray-200">{stat.value}</p>
-          </div>
-          <stat.icon className="w-8 h-8 text-blue-500" />
+      <div key={index} className="bg-gray-900 rounded-lg shadow-lg p-6">
+      <div className="flex items-center justify-between">
+        <div>
+        <p className="text-sm text-gray-400">{stat.label}</p>
+        <p className="text-2xl font-bold text-gray-200">{stat.value}</p>
         </div>
-        </div>
+        <stat.icon className="w-8 h-8 text-blue-500" />
+      </div>
+      </div>
       ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="bg-gray-900 rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-200">Server Economy</h2>
-        <div className="h-64 bg-gray-800 rounded flex flex-col items-center justify-center">
-        <BarChart3 className="w-12 h-12 text-gray-400 mb-2" />
-        <span className="text-gray-500">Economy chart would go here</span>
+        <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-bold mb-4 text-gray-200">Player Activity Heatmap</h2>
+          <div className="relative h-64">
+            <iframe
+              src="https://heatmap-external-service.com/player-activity"
+              title="Player Activity Heatmap"
+              className="w-full h-full rounded-lg border-none"
+            ></iframe>
+          </div>
         </div>
-      </div>
-
-      <div className="bg-gray-900 rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-200">Player Heatmap</h2>
-        <div className="h-64 bg-gray-800 rounded flex flex-col items-center justify-center">
-        <MapPin className="w-12 h-12 text-gray-400 mb-2" />
-        <span className="text-gray-500">Heatmap would go here</span>
+        <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-bold mb-4 text-gray-200">Server Load Heatmap</h2>
+          <div className="relative h-64">
+            <iframe
+              src="https://heatmap-external-service.com/server-load"
+              title="Server Load Heatmap"
+              className="w-full h-full rounded-lg border-none"
+            ></iframe>
+          </div>
         </div>
-      </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1069,8 +1082,8 @@ function Dashboard() {
         <span className="text-gray-500">99.99% uptime</span>
         </div>
       </div>
-      </div>
     </div>
+  </div>
 
     <div className="mt-12 bg-gray-900 rounded-lg shadow-lg p-6">
       <h2 className="text-xl font-bold mb-4 text-gray-200">Recent Activity</h2>
